@@ -6,6 +6,7 @@ dist
 .gitignore
 README.md
 .vscode
+.claude
 .idea
 *.md
 !templates/
