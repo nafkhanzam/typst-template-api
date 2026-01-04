@@ -6,6 +6,8 @@ services:
     environment:
       - PORT=3000
       - NODE_ENV=production
+      # Uncomment to enable authentication
+      # - SECRET_TOKEN=your-secret-token-here
     volumes:
       # Mount templates directory for easy updates without rebuilding
       - ./templates:/app/templates:ro

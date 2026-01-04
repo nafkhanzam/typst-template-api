@@ -36,13 +36,55 @@ docker run -p 3000:3000 -v $(pwd)/templates:/app/templates:ro typst-template-api
 
 The server will run on `http://localhost:3000` (or the port specified in `PORT` environment variable).
 
+## Authentication
+
+Authentication is optional and controlled by the `SECRET_TOKEN` environment variable.
+
+### Enable Authentication
+
+Set the `SECRET_TOKEN` environment variable:
+
+```bash
+# In development
+export SECRET_TOKEN=your-secret-token-here
+pnpm dev
+
+# Or create a .env file
+cp .env.example .env
+# Edit .env and set SECRET_TOKEN
+```
+
+### Using Authenticated Endpoints
+
+When authentication is enabled, include the token in the `Authorization` header:
+
+```bash
+# With Bearer prefix
+curl -X POST http://localhost:3000/template/example \
+  -H "Authorization: Bearer your-secret-token-here" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Test"}' \
+  --output example.pdf
+
+# Or without Bearer prefix
+curl -X POST http://localhost:3000/template/example \
+  -H "Authorization: your-secret-token-here" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Test"}' \
+  --output example.pdf
+```
+
+### Disable Authentication
+
+Leave `SECRET_TOKEN` unset or empty to allow unauthenticated access.
+
 ## API Endpoints
 
 ### POST `/`
 
 Generate a PDF from raw Typst content.
 
-**Example:**
+**Example (without authentication):**
 
 ```bash
 curl -X POST http://localhost:3000 \
@@ -59,6 +101,18 @@ Or with JSON:
 curl -X POST http://localhost:3000 \
   -H "Content-Type: application/json" \
   -d '{"content":"= My Document\n\nThis is the content."}' \
+  --output output.pdf
+```
+
+**Example (with authentication):**
+
+```bash
+curl -X POST http://localhost:3000 \
+  -H "Authorization: Bearer your-secret-token-here" \
+  -H "Content-Type: text/plain" \
+  -d "= Hello World
+
+This is a simple Typst document." \
   --output output.pdf
 ```
 

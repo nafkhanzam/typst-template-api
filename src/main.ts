@@ -5,13 +5,39 @@ import * as path from "path";
 
 const app = express();
 const port = process.env.PORT || 3000;
+const SECRET_TOKEN = process.env.SECRET_TOKEN;
 
 app.use(express.json());
 app.use(express.text({ type: "text/plain" }));
 
+// Authorization middleware
+const authenticate = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  // Skip auth if SECRET_TOKEN is not set
+  if (!SECRET_TOKEN) {
+    return next();
+  }
+
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).json({ error: "Missing Authorization header" });
+  }
+
+  // Support both "Bearer <token>" and raw token
+  const token = authHeader.startsWith("Bearer ")
+    ? authHeader.substring(7)
+    : authHeader;
+
+  if (token !== SECRET_TOKEN) {
+    return res.status(401).json({ error: "Invalid token" });
+  }
+
+  next();
+};
+
 const TEMPLATES_DIR = path.join(process.cwd(), "templates");
 
-app.post("/", (req, res) => {
+app.post("/", authenticate, (req, res) => {
   try {
     const typstContent =
       typeof req.body === "string" ? req.body : req.body.content;
@@ -36,7 +62,7 @@ app.post("/", (req, res) => {
   }
 });
 
-app.post("/template/:templateName", (req, res) => {
+app.post("/template/:templateName", authenticate, (req, res) => {
   try {
     const { templateName } = req.params;
     const jsonData = req.body || {};
@@ -97,4 +123,9 @@ app.post("/template/:templateName", (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server running on http://localhost:${port}`);
+  if (SECRET_TOKEN) {
+    console.log("🔒 Authentication enabled");
+  } else {
+    console.log("⚠️  Authentication disabled - set SECRET_TOKEN to enable");
+  }
 });
